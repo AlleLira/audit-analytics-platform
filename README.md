@@ -209,6 +209,6 @@ Este é um projeto de portfólio desenvolvido para fins de estudo e demonstraç�
 - 🐍 Python
 - 📈 Power BI
 
-LinkedIn: *(adicione seu link aqui)*
+LinkedIn: https://www.linkedin.com/in/alessandra-lira-oliveira/
 
 GitHub: https://github.com/AlleLira
