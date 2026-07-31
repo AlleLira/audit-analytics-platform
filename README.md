@@ -110,13 +110,30 @@ audit-analytics-platform/
 │   └── NR-006_SQL_Database_Design.pdf
 │
 ├── database/
-│   ├── schema/
-│   ├── tables/
-│   ├── views/
-│   ├── procedures/
-│   ├── functions/
-│   ├── indexes/
-│   └── migrations/
+│   ├── 01_database/
+│   │   └── 001_create_database.sql
+│   │
+│   ├── 02_tables/
+│   │   ├── 010_create_dCalendario.sql
+│   │   ├── 020_create_dEstado.sql
+│   │   ├── 030_create_dSupervisor.sql
+│   │   ├── 040_create_dGerente.sql
+│   │   ├── 050_create_dCategoria.sql
+│   │   ├── 060_create_dLoja.sql
+│   │   ├── 070_create_dProduto.sql
+│   │   └── 080_create_fPerdas.sql
+│   │
+│   ├── 03_constraints/
+│   │
+│   ├── 04_indexes/
+│   │
+│   ├── 05_views/
+│   │
+│   ├── 06_procedures/
+│   │
+│   ├── 07_seed/
+│   │
+│   └── 08_tests/
 │
 ├── etl/
 │
