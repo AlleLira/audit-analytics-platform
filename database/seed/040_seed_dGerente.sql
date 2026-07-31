@@ -2,9 +2,9 @@
 ===============================================================================
 Projeto.....: Audit Analytics Platform
 Arquivo.....: 040_seed_dGerente.sql
-Objetivo....: Popular a dimensão dGerente
+Objetivo....: Popular a dimensão dGerente com 16 gerentes fictícios
 Autor.......: Alessandra Lira
-Versão......: 1.0
+Versão......: 1.1
 Data........: 31/07/2026
 ===============================================================================
 */
@@ -26,12 +26,22 @@ SELECT
 FROM
 (
     VALUES
-        ('Ana Paula Ribeiro', 'Ativo'),
-        ('Carlos Henrique Alves', 'Ativo'),
-        ('Fernanda Souza', 'Ativo'),
-        ('Marcelo Oliveira', 'Ativo'),
-        ('Juliana Martins', 'Ativo'),
-        ('Ricardo Gomes', 'Ativo')
+        ('Ana Paula Ribeiro',       'Ativo'),
+        ('Carlos Henrique Alves',   'Ativo'),
+        ('Fernanda Souza',          'Ativo'),
+        ('Marcelo Oliveira',        'Ativo'),
+        ('Juliana Martins',         'Ativo'),
+        ('Ricardo Gomes',           'Ativo'),
+        ('Camila Rodrigues',        'Ativo'),
+        ('Eduardo Nascimento',      'Ativo'),
+        ('Patrícia Almeida',        'Ativo'),
+        ('Roberto Ferreira',        'Ativo'),
+        ('Daniela Costa',           'Ativo'),
+        ('Gustavo Barbosa',         'Ativo'),
+        ('Renata Carvalho',         'Ativo'),
+        ('Leonardo Mendes',         'Ativo'),
+        ('Vanessa Lima',            'Ativo'),
+        ('Thiago Moreira',          'Ativo')
 ) AS Origem
 (
     NomeGerente,
@@ -43,6 +53,7 @@ WHERE NOT EXISTS
     FROM dbo.dGerente AS Destino
     WHERE Destino.NomeGerente = Origem.NomeGerente
 );
+GO
 
 PRINT 'Carga da dimensão dGerente concluída com sucesso.';
 GO
