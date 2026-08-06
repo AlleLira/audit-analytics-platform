@@ -26,31 +26,33 @@ SELECT
     c.Ativo AS CategoriaAtiva,
 
     COUNT_BIG(f.PerdaID) AS TotalOcorrencias,
-    SUM(f.Quantidade) AS QuantidadePerdida,
 
-    CAST
-    (
+    SUM(CAST(f.Quantidade AS BIGINT)) AS QuantidadePerdida,
+
+    CAST(
         SUM(f.ValorPerda)
         AS DECIMAL(18,2)
     ) AS ValorTotalPerdido,
 
-    CAST
-    (
+    CAST(
         AVG(f.ValorPerda)
         AS DECIMAL(18,2)
     ) AS ValorMedioPorOcorrencia,
 
-    CAST
-    (
+    CAST(
         SUM(f.ValorPerda)
-        / NULLIF(SUM(f.Quantidade), 0)
+        / NULLIF(SUM(CAST(f.Quantidade AS DECIMAL(18,2))), 0)
         AS DECIMAL(18,2)
     ) AS ValorMedioPorUnidade
+
 FROM dbo.fPerdas AS f
+
 INNER JOIN dbo.dProduto AS p
     ON f.ProdutoID = p.ProdutoID
+
 INNER JOIN dbo.dCategoria AS c
-    ON f.CategoriaID = c.CategoriaID
+    ON p.CategoriaID = c.CategoriaID
+
 GROUP BY
     p.ProdutoID,
     p.CodigoProduto,
@@ -60,7 +62,4 @@ GROUP BY
     c.CategoriaID,
     c.NomeCategoria,
     c.Ativo;
-GO
-
-PRINT 'View dbo.vw_PerdasPorProduto criada ou atualizada com sucesso.';
 GO
