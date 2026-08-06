@@ -1,8 +1,8 @@
 /*
 ===============================================================================
 Projeto.....: Audit Analytics Platform
-Arquivo.....: 160_create_sp_CarregarProduto.sql
-Objetivo....: Criar procedure para inserir ou atualizar produtos
+Arquivo.....: 150_create_sp_CarregarCalendario.sql
+Objetivo....: Criar procedure para carga incremental da dimensão dCalendario
 Autor.......: Alessandra Lira
 Versão......: 1.0
 Data........: 01/08/2026
@@ -12,100 +12,100 @@ Data........: 01/08/2026
 USE AuditAnalyticsDW;
 GO
 
-CREATE OR ALTER PROCEDURE dbo.sp_CarregarProduto
-    @CodigoProduto VARCHAR(30),
-    @NomeProduto   VARCHAR(150),
-    @CategoriaID   INT,
-    @ValorVenda    DECIMAL(18,2),
-    @Ativo         BIT = 1
+CREATE OR ALTER PROCEDURE dbo.sp_CarregarCalendario
+    @DataInicial DATE,
+    @DataFinal   DATE
 AS
 BEGIN
     SET NOCOUNT ON;
     SET XACT_ABORT ON;
+    SET DATEFIRST 1;
+    SET LANGUAGE Portuguese;
 
-    IF NULLIF(LTRIM(RTRIM(@CodigoProduto)), '') IS NULL
-        THROW 50001, 'O código do produto é obrigatório.', 1;
+    IF @DataInicial IS NULL OR @DataFinal IS NULL
+    BEGIN
+        THROW 50001,
+              'As datas inicial e final são obrigatórias.',
+              1;
+    END;
 
-    IF NULLIF(LTRIM(RTRIM(@NomeProduto)), '') IS NULL
-        THROW 50002, 'O nome do produto é obrigatório.', 1;
-
-    IF @ValorVenda < 0
-        THROW 50003, 'O valor de venda não pode ser negativo.', 1;
-
-    IF NOT EXISTS
-    (
-        SELECT 1
-        FROM dbo.dCategoria
-        WHERE CategoriaID = @CategoriaID
-          AND Ativo = 1
-    )
-        THROW 50004, 'A categoria informada não existe ou está inativa.', 1;
+    IF @DataInicial > @DataFinal
+    BEGIN
+        THROW 50002,
+              'A data inicial não pode ser superior à data final.',
+              1;
+    END;
 
     BEGIN TRY
         BEGIN TRANSACTION;
 
-        IF EXISTS
-        (
-            SELECT 1
-            FROM dbo.dProduto
-            WHERE CodigoProduto = @CodigoProduto
-        )
-        BEGIN
-            UPDATE dbo.dProduto
-            SET
-                NomeProduto = @NomeProduto,
-                CategoriaID = @CategoriaID,
-                ValorVenda = @ValorVenda,
-                Ativo = @Ativo
-            WHERE CodigoProduto = @CodigoProduto;
+        DECLARE @DataAtual DATE = @DataInicial;
+        DECLARE @RegistrosInseridos INT = 0;
 
-            COMMIT TRANSACTION;
-
-            SELECT
-                ProdutoID,
-                CodigoProduto,
-                NomeProduto,
-                CategoriaID,
-                ValorVenda,
-                Ativo,
-                'Atualizado' AS AcaoExecutada
-            FROM dbo.dProduto
-            WHERE CodigoProduto = @CodigoProduto;
-        END
-        ELSE
+        WHILE @DataAtual <= @DataFinal
         BEGIN
-            INSERT INTO dbo.dProduto
+            IF NOT EXISTS
             (
-                CodigoProduto,
-                NomeProduto,
-                CategoriaID,
-                ValorVenda,
-                Ativo
+                SELECT 1
+                FROM dbo.dCalendario
+                WHERE DataCompleta = @DataAtual
             )
-            VALUES
-            (
-                @CodigoProduto,
-                @NomeProduto,
-                @CategoriaID,
-                @ValorVenda,
-                @Ativo
-            );
+            BEGIN
+                INSERT INTO dbo.dCalendario
+                (
+                    DataID,
+                    DataCompleta,
+                    Dia,
+                    DiaSemanaNumero,
+                    DiaSemanaNome,
+                    SemanaAno,
+                    MesNumero,
+                    MesNome,
+                    MesAbreviado,
+                    AnoMes,
+                    Trimestre,
+                    Semestre,
+                    Ano,
+                    EhFimDeSemana
+                )
+                VALUES
+                (
+                    CONVERT(INT, CONVERT(CHAR(8), @DataAtual, 112)),
+                    @DataAtual,
+                    DAY(@DataAtual),
+                    DATEPART(WEEKDAY, @DataAtual),
+                    DATENAME(WEEKDAY, @DataAtual),
+                    DATEPART(ISO_WEEK, @DataAtual),
+                    MONTH(@DataAtual),
+                    DATENAME(MONTH, @DataAtual),
+                    LEFT(DATENAME(MONTH, @DataAtual), 3),
+                    CONVERT(CHAR(7), @DataAtual, 126),
+                    DATEPART(QUARTER, @DataAtual),
+                    CASE
+                        WHEN MONTH(@DataAtual) <= 6 THEN 1
+                        ELSE 2
+                    END,
+                    YEAR(@DataAtual),
+                    CASE
+                        WHEN DATEPART(WEEKDAY, @DataAtual) IN (6, 7)
+                            THEN 1
+                        ELSE 0
+                    END
+                );
 
-            DECLARE @ProdutoID INT = SCOPE_IDENTITY();
+                SET @RegistrosInseridos += 1;
+            END;
 
-            COMMIT TRANSACTION;
-
-            SELECT
-                ProdutoID,
-                CodigoProduto,
-                NomeProduto,
-                CategoriaID,
-                ValorVenda,
-                Ativo,
-                'Inserido' AS AcaoExecutada
-            FROM dbo.dProduto
-            WHERE ProdutoID = @ProdutoID;
+            SET @DataAtual = DATEADD(DAY, 1, @DataAtual);
         END;
+
+        COMMIT TRANSACTION;
+
+        SELECT
+            @RegistrosInseridos AS RegistrosInseridos,
+            @DataInicial AS DataInicialProcessada,
+            @DataFinal AS DataFinalProcessada,
+            'Sucesso' AS StatusExecucao;
     END TRY
     BEGIN CATCH
         IF @@TRANCOUNT > 0
@@ -116,5 +116,5 @@ BEGIN
 END;
 GO
 
-PRINT 'Procedure dbo.sp_CarregarProduto criada ou atualizada com sucesso.';
+PRINT 'Procedure dbo.sp_CarregarCalendario criada ou atualizada com sucesso.';
 GO
